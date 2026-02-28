@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router';
 
 export default function DashboardPage() {
-const apiUrl = import.meta.env.API_URL || 'http://localhost:10000';
+const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:10000';
   const { logout } = useAuth();
   const [data, setData] = useState(null);
   const navigate = useNavigate();

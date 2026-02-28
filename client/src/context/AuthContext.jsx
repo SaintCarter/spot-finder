@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext();
-const apiUrl = import.meta.env.API_URL || 'http://localhost:10000';
+const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:10000';
 
 
 export function AuthProvider({ children }) {
