@@ -11,7 +11,7 @@ const app = express();
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({ 
-  origin: process.env.client || 'http://localhost:5173', // Allow requests from the frontend during development
+  origin: process.env.client,
   credentials: true 
 }));
 
