@@ -36,7 +36,8 @@ export const login = async (req, res) => {
         return res.cookie('spotfinder_access_token', token, {
             httpOnly: true,    
             secure: process.env.NODE_ENV === 'production', 
-            sameSite: 'lax',    
+            sameSite: 'none',
+            secure: true,    
             maxAge: 60 * 60 * 1000 // 1 hour 
         }).status(200).json({ 
             message: "Account logged in successfully!", 
@@ -56,7 +57,8 @@ export const logout = (req, res) => {
     res.clearCookie('spotfinder_access_token', {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        sameSite: 'none',
+        secure: true
     });
 
     return res.status(200).json({
