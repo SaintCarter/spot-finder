@@ -2,15 +2,21 @@ import express from 'express';
 import cors from 'cors';
 import authRoutes from './routes/auth.js';
 import userDataRoutes from './routes/userData.js';
+import logHeaderInfo from './middleware/logHeaders.js';
+import cookieParser from 'cookie-parser';
 
 const app = express();
 
 // Middleware
 app.use(express.json());
+app.use(cookieParser());
 app.use(cors({ 
-  origin: process.env.client, 
+  origin: process.env.client || 'http://localhost:5173', // Allow requests from the frontend during development
   credentials: true 
 }));
+
+//custom middleware
+app.use(logHeaderInfo);
 
 // Routes
 app.use('/api/auth', authRoutes); 
