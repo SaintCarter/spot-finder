@@ -8,7 +8,7 @@ export const login = async (req, res) => {
     try {
         const { data: user, error } = await supabase
             .from('users')
-            .select('id, username, password_hash')
+            .select('id, username, passwordhashed')
             .eq('username', username)
             .maybeSingle();
 
@@ -18,7 +18,7 @@ export const login = async (req, res) => {
             return res.status(401).json({ message: "Invalid credentials" });
         }
 
-        const passwordsMatch = await bcrypt.compare(password, user.password_hash);
+        const passwordsMatch = await bcrypt.compare(password, user.passwordhashed);
         if (!passwordsMatch) {
             return res.status(401).json({ message: "Invalid credentials" });
         }

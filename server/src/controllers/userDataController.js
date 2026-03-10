@@ -8,14 +8,14 @@ export const getDashboard = async (req, res) => {
   try {
     const userId = req.user.userId;
 
-    const { data: dashboardData, error } = await supabase
+    const { data: dashboardData, error: dashboardError } = await supabase
       .from('user_dashboard')
       .select('*')
-      .eq('user_id', userId)
+      .eq('userid', userId)
       .maybeSingle();
 
-    if (error) {
-      console.error("Supabase Error:", error.message);
+    if (dashboardError) {
+      console.error("dash Error:", dashboardError.message);
       return res.status(500).json({ error: "Failed to fetch dashboard data." });
     }
 
@@ -23,33 +23,46 @@ export const getDashboard = async (req, res) => {
       return res.status(404).json({ message: "Dashboard not found." });
     }
 
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('favouriteboardurl')
+      .eq('id', userId)
+      .maybeSingle();
+    if (userError) {
+      return res.status(500).json({ error: "Failed to fetch user data." });
+    }
+
+    if (!userData) {
+      return res.status(404).json({ message: "User not found." });
+    }
+    
+
     res.status(200).json({ 
       message: "Here's your dashboard data!",
-      bio: dashboardData.bio
+      bio: dashboardData.bio,
+      image: userData.favouriteboardurl,
     });
 
   } catch (err) {
-    console.error("Server Crash:", err);
     res.status(500).json({ error: "Internal server error." });
   }
 };
 
 
 export const createAccount = async (req, res) => {
-  const { username, password, phoneNumber } = req.body;
+  const { username, password, email } = req.body;
   
   try {
-    const uuid = crypto.randomUUID();
     const saltRounds = 10;
     const passwordHashed = bcrypt.hashSync(password, saltRounds);
     const { data: userData, error: userError } = await supabase
       .from('users')
       .insert([
-        { 
-          id: uuid,
+        {
           username: username,
-          password_hash: passwordHashed,
-          phone: phoneNumber,
+          passwordhashed: passwordHashed,
+          email: email,
+          favouriteboardurl: req.processedImageUrl || null,
         },
       ])
       .select();
@@ -60,12 +73,24 @@ export const createAccount = async (req, res) => {
       .from('user_dashboard')
       .insert([
         { 
-          user_id: uuid, 
+          userid: userData[0].id, 
           bio: "My Bio" 
         }
       ]);
 
     if (dashboardError) throw dashboardError;
+
+    const { error: boardError } = await supabase
+      .from('users_skateboard')
+      .insert([
+        { 
+          usersid: userData[0].id, 
+          boardurl: req.processedImageUrl,
+        }
+      ]);
+
+    if (boardError) throw boardError;
+
 
     return res.status(200).json({ 
       message: "Account and Dashboard created successfully!", 
@@ -73,7 +98,6 @@ export const createAccount = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Registration error:', error);
     return res.status(500).json({ 
       message: "Failed to create account", 
       error: error.message 

@@ -1,9 +1,12 @@
+import dotenv from 'dotenv';
 import express from 'express';
 import cors from 'cors';
 import authRoutes from './routes/auth.js';
 import userDataRoutes from './routes/userData.js';
 import logHeaderInfo from './middleware/logHeaders.js';
 import cookieParser from 'cookie-parser';
+
+dotenv.config();
 
 const app = express();
 
@@ -21,7 +24,6 @@ app.use(logHeaderInfo);
 // Routes
 app.use('/api/auth', authRoutes); 
 app.use('/api/userData', userDataRoutes); 
-// Note: This makes the full path: /api/auth/login and /api/userData/dashboard-data
 
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {

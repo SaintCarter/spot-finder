@@ -1,0 +1,130 @@
+CREATE TABLE users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    username VARCHAR(50) UNIQUE NOT NULL,
+    email VARCHAR(50) UNIQUE NOT NULL,
+    passwordHashed TEXT NOT NULL,
+    favouriteBoardUrl TEXT,
+
+    createdAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE users_skateboard(
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    usersId UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+
+    boardUrl TEXT NOT NULL,
+
+    createdAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE user_dashboard (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(), 
+    userId UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+
+    bio TEXT,
+
+    createdAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+
+
+
+
+
+
+
+CREATE TABLE spot_type(
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(50) NOT NULL UNIQUE
+);
+
+CREATE TABLE spot (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    creatorId UUID NOT NULL REFERENCES users(id),
+    spotTypeId UUID NOT NULL REFERENCES spot_type(id),
+
+    name VARCHAR(100) NOT NULL,
+    description VARCHAR(500),
+    address VARCHAR(100),
+    latitude DOUBLE PRECISION NOT NULL,
+    longitude DOUBLE PRECISION NOT NULL,
+    hasSecurity BOOLEAN NOT NULL DEFAULT FALSE,
+
+    createdAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE spot_post(
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    spotId UUID NOT NULL REFERENCES spot(id) ON DELETE CASCADE,
+    creatorId UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+
+    caption VARCHAR(200),
+    postUrl TEXT NOT NULL UNIQUE,
+    postType VARCHAR(10) NOT NULL,
+
+    createdAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE spot_rating(
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    usersId UUID NOT NULL REFERENCES users(id),
+    spotId UUID NOT NULL REFERENCES spot(id),
+
+    rating SMALLINT NOT NULL CHECK (rating >= 1 AND rating <= 5),
+
+    createdAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(usersId, spotId)
+);
+
+CREATE TABLE spot_post_vote(
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    usersId UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    postId UUID NOT NULL REFERENCES spot_post(id) ON DELETE CASCADE,
+
+    votedYes BOOLEAN NOT NULl, 
+
+    createdAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(usersId, postId)
+);
+
+
+
+
+
+
+
+
+
+CREATE TABLE log_history (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    ipAddress INET, 
+    usersAgent TEXT,
+    path TEXT,
+    body JSONB, 
+    responseTime INTEGER, 
+    cookie TEXT,
+
+    createdAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE security_flags(
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    logId UUID REFERENCES log_history(id) NOT NULL,
+
+    usersId UUID,
+    securityMessage VARCHAR(100),
+    location JSONB,
+
+    createdAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
