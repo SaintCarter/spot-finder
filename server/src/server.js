@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import authRoutes from './routes/auth.js';
 import userDataRoutes from './routes/userData.js';
+import spotDataRoutes from './routes/spotData.js';
 import logHeaderInfo from './middleware/logHeaders.js';
 import cookieParser from 'cookie-parser';
 
@@ -24,6 +25,7 @@ app.use(logHeaderInfo);
 // Routes
 app.use('/api/auth', authRoutes); 
 app.use('/api/userData', userDataRoutes); 
+app.use('/api/spotData', spotDataRoutes); 
 
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
