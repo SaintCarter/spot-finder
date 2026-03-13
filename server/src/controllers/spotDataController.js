@@ -19,7 +19,6 @@ export const getSpotTypes = async (req, res) => {
     
 } 
 export const createSpot = async (req, res) => {
-    let mainUrl;
     try{
         const { spotname, description, hasSecurity, creatorId, latitude, longitude, spottype } = req.body;
         const file = req.file;
@@ -27,20 +26,24 @@ export const createSpot = async (req, res) => {
             return res.status(400).json({ error: 'No media file provided' });
         }
         const fileName = `${Date.now()}-${file.originalname}`;
-        console.log(fileName);
 
         const { data: mediaData, error: mediaError } = await supabase.storage.from('spots').upload(fileName, file)
         if (mediaError) {
             console.log(mediaError);
             res.status(400).json({success:false, error: mediaError});
-        } else {
-            mainUrl = mediaData.id;
         }
+
+        const { data: { publicUrl } } = supabase.storage
+            .from('spots')
+            .getPublicUrl(fileName);
+        
+        
+
 
         const { data, error } = await supabase
             .from('spot')
             .insert([
-                { creatorid: creatorId, spottypeid: spottype, name: spotname, description: description, hassecurity: hasSecurity, latitude: latitude, longitude: longitude, mainurl: mainUrl  },
+                { creatorid: creatorId, spottypeid: spottype, name: spotname, description: description, hassecurity: hasSecurity, latitude: latitude, longitude: longitude, mainurl: publicUrl  },
             ])
             .select()
         if (error) {
