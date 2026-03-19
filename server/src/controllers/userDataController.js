@@ -49,9 +49,13 @@ export const getDashboard = async (req, res) => {
 };
 
 
+
+
+
 export const createAccount = async (req, res) => {
   const { username, password, email } = req.body;
-  
+  const defaultBoard = 'https://btxaypoxynjsrsxpbysz.supabase.co/storage/v1/object/public/boards/profile-1773835173008-gx0iqx.png';
+
   try {
     const saltRounds = 10;
     const passwordHashed = bcrypt.hashSync(password, saltRounds);
@@ -62,13 +66,14 @@ export const createAccount = async (req, res) => {
           username: username,
           passwordhashed: passwordHashed,
           email: email,
-          favouriteboardurl: req.processedImageUrl || null,
+          favouriteboardurl: defaultBoard || null,
         },
       ])
       .select();
 
     if (userError) throw userError;
 
+    //init dashboard 
     const { error: dashboardError } = await supabase
       .from('user_dashboard')
       .insert([
@@ -79,17 +84,6 @@ export const createAccount = async (req, res) => {
       ]);
 
     if (dashboardError) throw dashboardError;
-
-    const { error: boardError } = await supabase
-      .from('users_skateboard')
-      .insert([
-        { 
-          usersid: userData[0].id, 
-          boardurl: req.processedImageUrl,
-        }
-      ]);
-
-    if (boardError) throw boardError;
 
 
     return res.status(200).json({ 

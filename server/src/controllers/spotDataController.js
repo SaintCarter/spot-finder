@@ -27,7 +27,12 @@ export const createSpot = async (req, res) => {
         }
         const fileName = `${Date.now()}-${file.originalname}`;
 
-        const { data: mediaData, error: mediaError } = await supabase.storage.from('spots').upload(fileName, file)
+        const { data: mediaData, error: mediaError } = await supabase.storage
+            .from('spots')
+            .upload(fileName, file.buffer, {
+                contentType: file.mimetype,
+            });
+
         if (mediaError) {
             console.log(mediaError);
             res.status(400).json({success:false, error: mediaError});
