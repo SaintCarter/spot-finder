@@ -19,48 +19,87 @@ export const getSpotTypes = async (req, res) => {
     
 } 
 export const createSpot = async (req, res) => {
-    try{
+    try {
         const { spotname, description, hasSecurity, creatorId, latitude, longitude, spottype } = req.body;
-        const file = req.file;
-        if (!file) {
+        const files = req.files;
+
+        if (!files || files.length === 0) {
             return res.status(400).json({ error: 'No media file provided' });
         }
-        const fileName = `${Date.now()}-${file.originalname}`;
 
-        const { data: mediaData, error: mediaError } = await supabase.storage
-            .from('spots')
-            .upload(fileName, file.buffer, {
-                contentType: file.mimetype,
+        const uploadedMedia = [];
+
+        // Upload files
+        for (const file of files) {
+            const fileName = `${Date.now()}-${file.originalname}`;
+
+            const { error: mediaError } = await supabase.storage
+                .from('spots')
+                .upload(fileName, file.buffer, {
+                    contentType: file.mimetype,
+                });
+
+            if (mediaError) {
+                console.log(mediaError);
+                return res.status(400).json({ error: 'Upload failed' });
+            }
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('spots')
+                .getPublicUrl(fileName);
+
+            uploadedMedia.push({
+                url: publicUrl,
+                type: file.mimetype.startsWith("video/") ? "video" : "image"
             });
+        };
 
-        if (mediaError) {
-            console.log(mediaError);
-            res.status(400).json({success:false, error: mediaError});
-        }
-
-        const { data: { publicUrl } } = supabase.storage
-            .from('spots')
-            .getPublicUrl(fileName);
-        
-        
-
-
-        const { data, error } = await supabase
+        //Create spot
+        const { data: spotData, error: spotError } = await supabase
             .from('spot')
             .insert([
-                { creatorid: creatorId, spottypeid: spottype, name: spotname, description: description, hassecurity: hasSecurity, latitude: latitude, longitude: longitude, mainurl: publicUrl  },
+                {
+                    creatorid: creatorId,
+                    spottypeid: spottype,
+                    name: spotname,
+                    description,
+                    hassecurity: hasSecurity === "true",
+                    latitude,
+                    longitude,
+                }
             ])
-            .select()
-        if (error) {
-            console.log(error);
-            res.status(400).json({success:false, error: error});
-        } else {
-            console.log(data);
-            res.status(200).json({success:true, message:'success'});
+            .select();
+
+        if (spotError) {
+            console.log(spotError);
+            return res.status(400).json({ error: 'Failed to create spot' });
         }
-    
-    }catch(err){
-        res.status(500).json({ error: "Internal server error." });
+
+        const spotId = spotData[0].id;
+
+        // Insert media
+        const mediaRows = uploadedMedia.map((media) => ({
+            spotid: spotId,
+            url: media.url,
+            type: media.type
+        }));
+
+        const { error: mediaInsertError } = await supabase
+            .from('spot_media')
+            .insert(mediaRows);
+
+        if (mediaInsertError) {
+            console.log(mediaInsertError);
+            return res.status(400).json({ error: 'Failed to save media' });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: 'Spot created successfully'
+        });
+
+    } catch (err) {
+        console.log(err);
+        return res.status(500).json({ error: "Internal server error." });
     }
-    
-} 
+};
