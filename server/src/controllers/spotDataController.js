@@ -20,8 +20,15 @@ export const getSpotTypes = async (req, res) => {
 } 
 export const createSpot = async (req, res) => {
     try {
-        const { spotname, description, hasSecurity, creatorId, latitude, longitude, spottype } = req.body;
+        const { spotname, description, hasSecurity, creatorId, latitude, longitude, } = req.body;
         const files = req.files;
+        let spotTypes = req.body.spottype;
+
+        if (!Array.isArray(spotTypes)) {
+            spotTypes = [spotTypes];
+        }
+
+        
 
         if (!files || files.length === 0) {
             return res.status(400).json({ error: 'No media file provided' });
@@ -60,7 +67,6 @@ export const createSpot = async (req, res) => {
             .insert([
                 {
                     creatorid: creatorId,
-                    spottypeid: spottype,
                     name: spotname,
                     description,
                     hassecurity: hasSecurity === "true",
@@ -75,7 +81,21 @@ export const createSpot = async (req, res) => {
             return res.status(400).json({ error: 'Failed to create spot' });
         }
 
-        const spotId = spotData[0].id;
+        const spotId = spotData[0].id;//needed for sub spot tables
+
+        const typeRows = spotTypes.map((type) => ({
+            spotid: spotId,
+            spottypeid: type,
+        }));
+
+        const { error: typeInsertError } = await supabase
+            .from('spot_has_types')
+            .insert(typeRows);
+
+        if (typeInsertError) {
+            console.log(typeInsertError);
+            return res.status(400).json({ error: 'Failed to save types' });
+        }
 
         // Insert media
         const mediaRows = uploadedMedia.map((media) => ({

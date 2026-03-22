@@ -54,7 +54,7 @@ export const getDashboard = async (req, res) => {
 
 export const createAccount = async (req, res) => {
   const { username, password, email } = req.body;
-  const defaultBoard = 'https://btxaypoxynjsrsxpbysz.supabase.co/storage/v1/object/public/boards/profile-1773835173008-gx0iqx.png';
+  const defaultBoard = 'https://btxaypoxynjsrsxpbysz.supabase.co/storage/v1/object/public/boards/profile-1774162792571-8yyub8.png';
 
   try {
     const saltRounds = 10;
