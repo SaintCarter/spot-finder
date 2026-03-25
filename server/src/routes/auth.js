@@ -7,8 +7,9 @@ const router = express.Router();
 router.post('/login', login);
 router.get('/me', requireAuth, (req, res) => {
     res.status(200).json({ 
-    message: "You are authenticated and can access this protected route!",
-    user: req.user
+        message: "You are authenticated and can access this protected route!",
+        userId: req.user.userId,
+        username: req.user.username
     })
 });
 router.post('/logout', requireAuth, logout);

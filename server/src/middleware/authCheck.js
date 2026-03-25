@@ -5,9 +5,6 @@ export const requireAuth = async (req, res, next) => {
   const errorMessage = "Unauthorized - requireAuth";
   const token = req.cookies.spotfinder_access_token;
   if (!token) return res.status(401).json({ error: errorMessage });
-  if(token.length > 300 || token.length < 150){
-    return res.status(401).json({ error: errorMessage });
-  }
 
   try {
     const user = jwt.verify(token, process.env.JWT_SECRET);
