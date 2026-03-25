@@ -4,7 +4,7 @@ import cors from 'cors';
 import authRoutes from './routes/auth.js';
 import userDataRoutes from './routes/userData.js';
 import spotDataRoutes from './routes/spotData.js';
-import postDataRoutes from './routes/postData.js';
+import postDataRoutes from './routes/PostData.js';
 import logHeaderInfo from './middleware/logHeaders.js';
 import cookieParser from 'cookie-parser';
 
