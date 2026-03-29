@@ -8,16 +8,142 @@ export const getSpotTypes = async (req, res) => {
             .select('*');
         
         if(error){
-            res.status(400).json({error: 'failed to get spot types'});
+            return res.status(400).json({error: 'failed to get spot types'});
         }
         if(spot_type){
-            res.status(200).json({spotTypes: spot_type});
+            return res.status(200).json({spotTypes: spot_type});
         }
     }catch(err){
-        res.status(500).json({ error: "Internal server error." });
+        return res.status(500).json({ error: "Internal server error." });
     }
     
 } 
+
+
+
+
+export const insertRating = async (req, res) => {
+    const { spotId, rating } = req.body;
+    const userId = req.user.userId;
+
+    if(!rating || !spotId){
+        return res.status(400).json({error: 'failed to insert rating'});
+    }
+    if(rating > 5 || rating < 1){
+        return res.status(400).json({error: 'failed to insert rating'});
+    }
+    try{
+        const { data , error } = await supabase
+            .from('spot_rating')
+            .insert([
+                {
+                    usersid: userId,
+                    rating: rating,
+                    spotid: spotId
+                }
+            ])
+            .select();
+        
+        if(error){
+            return res.status(400).json({error: 'failed to insert rating'});
+        }
+
+        return res.status(200).json({success: true, message:"rating inserted"});
+
+    }catch(err){
+        return res.status(500).json({ error: "Internal server error." });
+    }
+    
+} 
+
+
+export const updateRating = async (req, res) => {
+    const { spotId, rating } = req.body;
+    const userId = req.user.userId;
+
+    if(!rating || !spotId){
+        return res.status(400).json({error: 'failed to insert rating'});
+    }
+    if(rating > 5 || rating < 1){
+        return res.status(400).json({error: 'failed to insert rating'});
+    }
+    try{
+        const { data, error } = await supabase
+            .from('spot_rating')
+            .update({ rating: rating })
+            .eq('usersid', userId)
+            .eq('spotid', spotId)
+            .select();
+        
+        if(error){
+            return res.status(400).json({error: 'failed to update rating'});
+        }
+
+        return res.status(200).json({success: true, message:"rating updated"});
+
+    }catch(err){
+        return res.status(500).json({ error: "Internal server error." });
+    }
+    
+} 
+
+
+
+export const getRatings = async (req, res) => {
+    const { spotId } = req.body;
+
+    if(!spotId){
+        return res.status(400).json({error: 'failed to get ratings no spot selected'});
+    }
+    try{
+        const { data: ratings , error } = await supabase
+            .from('spot_rating')
+            .select('rating')
+            .eq('spotid', spotId);
+        
+        if(error){
+            res.status(400).json({error: 'failed to get ratings'});
+        }
+        if(ratings){
+            return res.status(200).json({ratings});
+        }
+
+    }catch(err){
+        return res.status(500).json({ error: "Internal server error." });
+    }
+    
+} 
+
+
+export const checkUniqueRating = async (req, res) => {
+    const { spotId } = req.body;
+    const userId = req.user.userId;
+
+    try {
+        const { data, error } = await supabase
+            .from('spot_rating')
+            .select('spotid, usersid, rating')
+            .eq('spotid', spotId)
+            .eq('usersid', userId)
+            .maybeSingle();
+
+        if (error) throw error;
+
+        const rated = !!data;
+        const rating = data ? data.rating: 0;
+
+        return res.status(200).json({ rated, rating});
+        
+    } catch (err) {
+        console.error('CheckUnique Error:', err);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+}
+
+
+
+
+
 export const createSpot = async (req, res) => {
     try {
         const { spotname, description, hasSecurity, creatorId, latitude, longitude, } = req.body;
