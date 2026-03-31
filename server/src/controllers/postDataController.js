@@ -128,3 +128,31 @@ export const getPostDetails = async (req, res) => {
         res.status(500).json({ error: "Internal server error." });
     }
 }
+
+
+
+
+
+export const getSpotPosts = async (req, res) => {
+    const { spotId } = req.body;
+    console.log(spotId);
+    try{
+        const { data: postDetails, error:postError } = await supabase
+            .from('spot_post')
+            .select('*')
+            .eq('spotid', spotId);
+        
+        if(postError){
+            res.status(400).json({error: 'failed to get spot-post details'});
+        }
+
+        if(postDetails){
+            res.status(200).json({ postDetails });
+        }
+
+    }catch(err){
+        res.status(500).json({ error: "Internal server error." });
+    }
+}
+
+
