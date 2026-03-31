@@ -39,7 +39,7 @@ export const createPost = async (req, res) => {
             });
         };
 
-        //Create spot
+        //Create post
         const { data: postData, error: postError } = await supabase
             .from('spot_post')
             .insert([
@@ -77,7 +77,7 @@ export const createPost = async (req, res) => {
 
         return res.status(200).json({
             success: true,
-            message: 'Spot created successfully'
+            message: 'Post created successfully'
         });
 
     } catch (err) {
@@ -85,3 +85,46 @@ export const createPost = async (req, res) => {
         return res.status(500).json({ error: "Internal server error." });
     }
 };
+
+
+
+export const getPosts = async (req, res) => {
+    try{
+        const { data: posts, error:postError } = await supabase
+            .from('spot_post_media')
+            .select('*');
+        
+        if(postError){
+            res.status(400).json({error: 'failed to get posts'});
+        }
+
+        if(posts){
+            res.status(200).json({ posts });
+        }
+
+    }catch(err){
+        res.status(500).json({ error: "Internal server error." });
+    }
+}
+
+export const getPostDetails = async (req, res) => {
+    const { postId } = req.body;
+    try{
+        const { data: postDetails, error:postError } = await supabase
+            .from('spot_post')
+            .select('*')
+            .eq('id', postId)
+            .maybeSingle();
+        
+        if(postError){
+            res.status(400).json({error: 'failed to get post details'});
+        }
+
+        if(postDetails){
+            res.status(200).json({ postDetails });
+        }
+
+    }catch(err){
+        res.status(500).json({ error: "Internal server error." });
+    }
+}

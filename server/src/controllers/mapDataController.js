@@ -2,7 +2,7 @@ import { supabase } from '../config/supabase.js';
 
 
 export const getMap = async (req, res) => {
-    console.log("fetching data");
+    console.log("fetching map data");
     try{
         const { data: spots, error:spotError } = await supabase
             .from('spot')
