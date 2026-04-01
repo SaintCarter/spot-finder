@@ -104,3 +104,26 @@ export const getSettings = async (req, res) => {
     message: "this isnt set up yet!"
   });
 }
+
+
+export const getUsername = async (req, res) => {
+  const {userId} = req.body; 
+   try {
+        const { data: username, error } = await supabase
+            .from('users')
+            .select('username')
+            .eq('id', userId)
+            .maybeSingle();
+
+        if (error) throw error;
+
+        if (username) {
+            return res.status(200).json({username});
+        }
+
+        next();
+    } catch (err) {
+        console.error('get username Error:', err);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+}

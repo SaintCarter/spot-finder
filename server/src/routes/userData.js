@@ -1,5 +1,5 @@
 import express from 'express';
-import { getDashboard, createAccount, getSettings } from '../controllers/userDataController.js';
+import { getDashboard, createAccount, getSettings, getUsername } from '../controllers/userDataController.js';
 import { addBoardCheck, addBoard} from '../controllers/userSettingsController.js';
 import { requireAuth } from '../middleware/authCheck.js';
 import checkUniqueLogin  from '../middleware/checkUnique.js';
@@ -14,5 +14,6 @@ router.post('/create-account', checkUniqueLogin, createAccount);
 router.get('/settings', requireAuth, getSettings);
 router.post('/add-board-check', upload.single('boardImage'), requireAuth, removeBg, addBoardCheck);
 router.post('/add-board', requireAuth, addBoard);
+router.post('/get-username', getUsername);
 
 export default router;
