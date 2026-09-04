@@ -71,25 +71,54 @@ are the only response objects the frontend uses and needs to worry about handlin
 
 This server requires a jsonwebtoken to reach any endpoints that arent involved in creating an account or logging in.
 
-Creating an account we check if the email and username are unique and if not we send the respective error message and if yes, then we insert into the users table. When
-logging in we check if the username and password match any rows in the users table, if not then send the respective error message. If yes then we sign a jsonwebtoken with our secret key and attach the users role, id and username and send it the the user to use as credentials to pass AuthCheck.js. AuthCheck.js is the middleware blocking all other endpoints.
+When creating an account, we check if the email and username are unique and if not we send the respective error message and if yes, then we insert into the users table. 
+When logging in, we check if the username exists in the users table. If not, we send the respective error message. If yes, we then check if the password for that username matches. If not, we send the respective error message. If yes, we sign a JSON web token with our secret key. the JSON web token contains the users role, id and username. We then send the token to the user to use as credentials to pass AuthCheck.js. AuthCheck.js is the middleware blocking all other endpoints.
 
-all other endpoints are protected by AuthCheck.js which expects req.cookies.spotfinder_access_token. 
-it checks the token using jwt.verify(token, process.env.JWT_SECRET);
-the response determines whether access to the next proccess is granted or not.
+All other endpoints are protected by AuthCheck.js which expects req.cookies.spotfinder_access_token. 
+It checks the token using jwt.verify(token, process.env.JWT_SECRET);
+The response determines whether access to the next proccess runs or not.
 
-if a client presents our server with a valid token, it is mathematically guaranteed that the token was signed using our JWT SECRET, so, the server proceeds to run the requested process which potentially uses some of the trusted data provided in the JWT token. the requested process is usually some sort of database action, but can also be another service such as handling files with multer that we wouldnt want to even bother attempting unless the user was logged in, the request data is proper, and they haven't done the same action x times in the past x minutes.
-if the token is valid and we want to perform a database action, we must establish access control. to establish whether the user making the request should be allowed to perform the action they desire, we use the userId found in the trusted JWT token and in some cases the role(user/admin).
+If a client presents our server with a valid token, it is mathematically guaranteed that the token was signed using our JWT SECRET, so, the server proceeds to run the requested process which potentially uses some of the trusted data provided in the JWT token. The requested process is usually some sort of database action, but can also be another service such as handling files with Multer that we wouldn't want to even bother attempting unless the request was made by an authenticated user providing sanitized data and hasn't exceeded their request limit.
+If the token is valid and we want to perform a database action, we must establish access control. to establish whether the user making the request should be allowed to perform the action they desire, we use the userId found in the trusted JWT token and in some cases the role(user/admin).
 
 as you can see, the server uses the JWT as the source of truth to grant access.
+therefor it is vital that the token is stored in cookie with the following configuration:
+
+    - short expiry
+    - httpOnly
+    - secure
+    - same site strict
+
+# Database Configuration
+
+The database we use is postgREST. It is configured to only accept requests made by the IP address of our server. It uses a database username and password for authentication.
+Therefor if our server has accepted the users request (passes AuthCheck.js middleware), it will perform actions on that users behalf. This architecture ensures no request can be made to the database without passing our rate limiting, sanitization and JWT verification checks. This leaves 3 attack vectors:
+
+    1. Leaked JWT secret
+    2. forgetting to add WHERE user.id = userId
+    3. compromised server code / github 
+
+Vectors 1 is very unlikely but not impossible. vector 2 relies on the developer to be diligent when writing code that makes db requests. vector 3 also relies on the diligence of the developer to keep packages updated. 
+
+How secure is this archetecture?
+    
+
+
+
+
+
+
+
+
+^^^^^
+
 that being said an attackers root targets are:
+
     -GITHUB LOGIN
-    -SUPABASE/DB LOGIN
+    -LEAKED ENV KEYS
 
 an attackers possibilities might be:
-    -leaked JWT SECRET
-    -leaked DB SERVICE KEY
-    -find misconfigured endpoints (forgot to add AuthCheck middleware)
+
     -denial of service(spam server and/or db, creating unrelated/fake posts and spots, spamming create account to hord common usernames/emails,)
     -sql injection specifically the create Spot (inserting into Spot table) approved column as that column should only ever be updated by the admin because it governs whether users should see it or not. by exploiting this, an attacker could create spots that will be shown to all users without admin approval. Skate spots are the main function of the actual service provided therefor would be denial of service via sql injection. you could say privilige escilation as a user is executing an admin only request, but the role never changed. ***fortunately we explicitly set approved to false in the insert call from our server***
     -XSS
