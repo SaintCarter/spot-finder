@@ -89,18 +89,26 @@ therefor it is vital that the token is stored in cookie with the following confi
     - secure
     - same site strict
 
+it is also vital to explicitly enforce the expected algorithm during verification
+
+    jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] }
+
+Revoke JWT when necessary
+
+
+
 # Database Configuration
 
 The database we use is postgREST. It is configured to only accept requests made by the IP address of our server. It uses a database username and password for authentication.
 Therefor if our server has accepted the users request (passes AuthCheck.js middleware), it will perform actions on that users behalf. This architecture ensures no request can be made to the database without passing our rate limiting, sanitization and JWT verification checks. This leaves 3 attack vectors:
 
     1. Leaked JWT secret
-    2. forgetting to add WHERE user.id = userId
-    3. compromised server code / github 
+    2. forgetting to add WHERE clause (fix by passing the JWT claim to postgREST to use RLS)
+    3. compromised server code / github
+    4. weak JWT secret
+    
 
-Vectors 1 is very unlikely but not impossible. vector 2 relies on the developer to be diligent when writing code that makes db requests. vector 3 also relies on the diligence of the developer to keep packages updated. 
-
-How secure is this archetecture?
+Vectors 1 and 4 are managed through strict environment secret controls, vector 3 relies on dependency hygiene, and vector 2 is eliminated by PostgREST Row-Level Security.
     
 
 
